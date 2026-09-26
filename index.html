@@ -25,7 +25,7 @@
             font-family: 'Fredoka', sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            overscroll-behavior: none; /* Bloqueia o efeito de rolar/puxar no mobile */
+            overscroll-behavior: none;
         }
 
         .custom-scrollbar::-webkit-scrollbar {
@@ -60,7 +60,6 @@
             transform: scale(0.92);
         }
 
-        /* Bloqueia gestos de toque no container do canvas */
         #drawing-container {
             touch-action: none;
         }
@@ -72,7 +71,7 @@
 </head>
 <body class="bg-amber-50 text-slate-800 h-full w-full flex flex-col fixed inset-0 overflow-hidden select-none">
 
-    <!-- CABEÇALHO COMPACTO (Mobile First) -->
+    <!-- CABEÇALHO COMPACTO -->
     <header class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white px-3 py-2 shrink-0 shadow-md flex items-center justify-between z-10">
         <div class="flex items-center gap-2">
             <div class="bg-white p-1.5 rounded-full text-pink-500 shadow">
@@ -99,7 +98,7 @@
         <!-- LINHA 1: Ferramentas + Ações + Ajustes -->
         <div class="flex items-center justify-between gap-1.5 overflow-x-auto custom-scrollbar pb-1">
             
-            <!-- Ferramentas Principais -->
+            <!-- Ferramentas Principais (Apenas Balde e Pincel) -->
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
                 <button id="tool-fill" class="tool-btn active-tool bg-white p-2 rounded-lg flex items-center gap-1 text-slate-700 transition">
                     <i data-lucide="paint-bucket" class="w-4 h-4"></i>
@@ -109,13 +108,9 @@
                     <i data-lucide="brush" class="w-4 h-4"></i>
                     <span class="text-xs font-bold hidden sm:inline">Pincel</span>
                 </button>
-                <button id="tool-eraser" class="tool-btn p-2 rounded-lg flex items-center gap-1 text-slate-700 transition">
-                    <i data-lucide="eraser" class="w-4 h-4"></i>
-                    <span class="text-xs font-bold hidden sm:inline">Borracha</span>
-                </button>
             </div>
 
-            <!-- Desfazer / Refazer / Limpar -->
+            <!-- Desfazer / Refazer -->
             <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
                 <button id="btn-undo" class="btn-bounce p-2 hover:bg-white rounded-lg text-slate-700 transition" title="Desfazer">
                     <i data-lucide="undo" class="w-4 h-4"></i>
@@ -123,16 +118,13 @@
                 <button id="btn-redo" class="btn-bounce p-2 hover:bg-white rounded-lg text-slate-700 transition" title="Refazer">
                     <i data-lucide="redo" class="w-4 h-4"></i>
                 </button>
-                <button id="btn-clear" class="btn-bounce p-2 hover:bg-red-100 text-red-600 rounded-lg transition" title="Limpar tudo">
-                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                </button>
             </div>
 
             <!-- Slider de Espessura/Tolerância Dinâmico -->
             <div class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-xl shrink-0 min-w-[130px]">
-                <span id="slider-label" class="text-[10px] font-bold text-slate-500 uppercase">Tam:</span>
-                <input type="range" id="dynamic-slider" min="2" max="40" value="12" class="w-16 accent-indigo-600 cursor-pointer">
-                <span id="slider-val" class="text-xs font-extrabold text-indigo-600 min-w-[24px]">12</span>
+                <span id="slider-label" class="text-[10px] font-bold text-slate-500 uppercase">Tol:</span>
+                <input type="range" id="dynamic-slider" min="5" max="100" value="35" class="w-16 accent-indigo-600 cursor-pointer">
+                <span id="slider-val" class="text-xs font-extrabold text-indigo-600 min-w-[24px]">35</span>
             </div>
 
             <!-- Cor Atual / Custom Color -->
@@ -145,7 +137,7 @@
             </div>
         </div>
 
-        <!-- LINHA 2: PALETA DE CORES FIXA ABAIXO -->
+        <!-- LINHA 2: PALETA DE CORES -->
         <div id="color-palette" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5 px-1 w-full justify-start md:justify-center shrink-0">
             <!-- Cores inseridas via JS -->
         </div>
@@ -154,7 +146,7 @@
     <!-- ÁREA CENTRAL DE PINTURA E SELEÇÃO DE DESENHOS -->
     <main class="flex-1 w-full max-w-5xl mx-auto p-2 flex flex-col md:flex-row gap-2 items-center justify-center overflow-hidden min-h-0">
         
-        <!-- Carrossel/Seleção de Desenhos (Horizontal no Mobile, Vertical no Desktop) -->
+        <!-- Carrossel de Desenhos -->
         <section class="w-full md:w-28 shrink-0 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
             <div id="image-selector" class="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto custom-scrollbar max-h-16 md:max-h-[70vh]">
                 <!-- Miniaturas geradas por JS -->
@@ -164,7 +156,6 @@
         <!-- Canvas Interativo -->
         <section class="flex-1 w-full h-full flex items-center justify-center min-h-0 relative">
             <div id="drawing-container" class="relative aspect-square max-w-full max-h-full border-2 border-white shadow-lg rounded-xl bg-white overflow-hidden flex items-center justify-center">
-                <!-- Canvas Único (Desenho + Linhas Preservadas) -->
                 <canvas id="main-canvas" width="600" height="600" class="w-full h-full touch-none"></canvas>
             </div>
         </section>
@@ -187,13 +178,13 @@
 
         /* ESTADO DA APLICAÇÃO */
         let corAtual = '#EC4899';
-        let ferramentaAtual = 'fill'; // 'fill', 'brush', 'eraser'
+        let ferramentaAtual = 'fill'; // 'fill' ou 'brush'
         let espessuraPincel = 12;
         let toleranciaBalde = 35;
         let imagemAtualIndex = 0;
 
         let estadoImagemOriginal = null;
-        let imagemLinhasCanvas = null; // Guarda a imagem de linhas do desenho
+        let imagemLinhasCanvas = null;
 
         /* HISTÓRICO (UNDO / REDO) */
         let historicoPassos = [];
@@ -276,7 +267,7 @@
             tocarSom('C4');
         }
 
-        /* CARREGAMENTO DE IMAGEM E BLOQUEIO DE LINHAS PRETAS */
+        /* CARREGAMENTO DE IMAGEM */
         function carregarImagem(caminhoSrc) {
             const img = new Image();
             img.crossOrigin = 'Anonymous';
@@ -293,7 +284,6 @@
 
                 ctx.drawImage(img, x, y, largura, altura);
 
-                // Armazena a imagem das linhas contornadas
                 imagemLinhasCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 salvarEstadoBase();
                 reiniciarHistorico();
@@ -341,7 +331,7 @@
             }
         }
 
-        /* RESTAURAÇÃO DE LINHAS (Impede a borracha/pincel de apagar o contorno preto) */
+        /* RESTAURAÇÃO DE LINHAS */
         function protegerLinhasDoDesenho() {
             if (!imagemLinhasCanvas) return;
 
@@ -349,13 +339,11 @@
             const dataAtual = atualData.data;
             const dataLinhas = imagemLinhasCanvas.data;
 
-            // Restaura pixels escuros/linhas pretas do desenho original
             for (let i = 0; i < dataLinhas.length; i += 4) {
                 const r = dataLinhas[i];
                 const g = dataLinhas[i + 1];
                 const b = dataLinhas[i + 2];
                 
-                // Se o pixel original for uma linha escura (contorno do desenho)
                 if (r < 100 && g < 100 && b < 100) {
                     dataAtual[i] = r;
                     dataAtual[i + 1] = g;
@@ -367,7 +355,7 @@
             ctx.putImageData(atualData, 0, 0);
         }
 
-        /* PREENCHIMENTO BALDE (FLOOD FILL) */
+        /* PREENCHIMENTO BALDE */
         function hexParaRgba(hex) {
             let c = hex.replace('#', '');
             if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -449,7 +437,7 @@
             tocarSom('E5');
         }
 
-        /* LOGICA DE PINTURA E BORRACHA */
+        /* LOGICA DE PINTURA */
         let desenhando = false;
         let ultimoX = 0;
         let ultimoY = 0;
@@ -493,14 +481,8 @@
             ctx.lineTo(coords.x, coords.y);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-
-            if (ferramentaAtual === 'eraser') {
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = espessuraPincel * 1.5;
-            } else {
-                ctx.strokeStyle = corAtual;
-                ctx.lineWidth = espessuraPincel;
-            }
+            ctx.strokeStyle = corAtual;
+            ctx.lineWidth = espessuraPincel;
 
             ctx.stroke();
 
@@ -511,7 +493,7 @@
         function finalizarPintura(e) {
             if (desenhando) {
                 desenhando = false;
-                protegerLinhasDoDesenho(); // Preserva as linhas pretas originais após o traço da borracha/pincel
+                protegerLinhasDoDesenho();
                 salvarPassoHistorico();
             }
         }
@@ -521,7 +503,6 @@
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active-tool'));
             document.getElementById(`tool-${ferramenta}`).classList.add('active-tool');
 
-            // Atualiza slider dependendo da ferramenta
             const slider = document.getElementById('dynamic-slider');
             const label = document.getElementById('slider-label');
             const valText = document.getElementById('slider-val');
@@ -564,9 +545,8 @@
             // Ferramentas
             document.getElementById('tool-fill').addEventListener('click', () => definirFerramenta('fill'));
             document.getElementById('tool-brush').addEventListener('click', () => definirFerramenta('brush'));
-            document.getElementById('tool-eraser').addEventListener('click', () => definirFerramenta('eraser'));
 
-            // Slider único
+            // Slider
             document.getElementById('dynamic-slider').addEventListener('input', (e) => {
                 const val = parseInt(e.target.value);
                 document.getElementById('slider-val').textContent = val;
@@ -585,13 +565,6 @@
             // Ações
             document.getElementById('btn-undo').addEventListener('click', desfazer);
             document.getElementById('btn-redo').addEventListener('click', refazer);
-            document.getElementById('btn-clear').addEventListener('click', () => {
-                if (estadoImagemOriginal) {
-                    ctx.putImageData(estadoImagemOriginal, 0, 0);
-                    reiniciarHistorico();
-                    tocarSom('C4');
-                }
-            });
 
             // Botões do Cabeçalho
             document.getElementById('finish-btn').addEventListener('click', () => {
