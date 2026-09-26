@@ -1,251 +1,174 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR" class="h-full overflow-hidden">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jogo de Colorir Interativo</title>
-    <!-- Tailwind CSS para Estilização Moderna -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons para Ícones da Interface -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gera Grill & Burguer</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script> 
+    <!-- Lucide Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- Tone.js para Efeitos Sonoros Opcionais -->
+    <!-- Tone.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
-    <!-- Canvas Confetti para Comemoração -->
+    <!-- Canvas Confetti -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
         
+        * {
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
         body {
             font-family: 'Fredoka', sans-serif;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: manipulation;
+            overscroll-behavior: none;
         }
 
-        /* Estilização para barras de rolagem personalizadas */
         .custom-scrollbar::-webkit-scrollbar {
-            height: 6px;
-            width: 6px;
+            height: 4px;
+            width: 4px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
             background: #f1f5f9;
-            border-radius: 10px;
         }
         .custom-scrollbar::-webkit-scrollbar-thumb {
             background: #cbd5e1;
             border-radius: 10px;
         }
 
-        /* Estilo para ferramentas ativas */
         .tool-btn.active-tool {
             background-color: #e0e7ff;
             border-color: #6366f1;
             color: #4338ca;
-            transform: scale(1.05);
-            box-shadow: 0 4px 6px -1px rgba(99, 102, 241, 0.2);
+            transform: scale(1.02);
         }
 
-        /* Estilo da amostra de cor selecionada */
         .color-swatch.active {
-            transform: scale(1.2);
+            transform: scale(1.15);
             outline: 3px solid #3b82f6;
-            outline-offset: 3px;
+            outline-offset: 2px;
         }
 
         .btn-bounce {
-            transition: transform 0.1s ease, box-shadow 0.1s ease;
+            transition: transform 0.1s ease;
         }
         .btn-bounce:active {
-            transform: scale(0.93);
+            transform: scale(0.92);
         }
 
         #drawing-container {
-            position: relative;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.12), 0 8px 10px -6px rgba(0, 0, 0, 0.08);
-            background-color: #ffffff;
-            border-radius: 1.25rem;
-            overflow: hidden;
             touch-action: none;
         }
 
-        #main-canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            cursor: crosshair;
+        canvas {
+            touch-action: none;
         }
     </style>
 </head>
-<body class="bg-amber-50 text-slate-800 min-h-screen flex flex-col justify-between overflow-x-hidden">
+<body class="bg-amber-50 text-slate-800 h-full w-full flex flex-col fixed inset-0 overflow-hidden select-none">
 
-    <!-- Cabecalho do Jogo -->
-    <header class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white p-3 md:p-4 shadow-lg">
-        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
-            <div class="flex items-center gap-3">
-                <div class="bg-white p-2 rounded-full text-pink-500 shadow-md">
-                    <i data-lucide="palette" class="w-6 h-6 md:w-8 md:h-8"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl md:text-2xl font-bold tracking-wide">Pintando e Colorindo</h1>
-                    <p class="text-[11px] md:text-xs text-pink-100 font-medium">Escolha um desenho e solte sua imaginação!</p>
-                </div>
+    <!-- CABEÇALHO COMPACTO -->
+    <header class="bg-gradient-to-r from-pink-500 via-purple-500 to-indigo-500 text-white px-3 py-2 shrink-0 shadow-md flex items-center justify-between z-10">
+        <div class="flex items-center gap-2">
+            <div class="bg-white p-1.5 rounded-full text-pink-500 shadow">
+                <i data-lucide="palette" class="w-5 h-5"></i>
             </div>
+            <h1 class="text-base font-bold tracking-wide leading-tight">Colorindo com Quelinha e Cesinha</h1>
+        </div>
 
-            <!-- Botões Superiores de Ação -->
-            <div class="flex items-center gap-2">
-                <button id="finish-btn" class="btn-bounce bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-xl shadow-md font-bold text-xs md:text-sm flex items-center gap-1.5">
-                    <i data-lucide="sparkles" class="w-4 h-4"></i>
-                    <span>Pronto!</span>
-                </button>
-                <button id="download-btn" class="btn-bounce bg-amber-400 hover:bg-amber-500 text-slate-900 px-3 py-2 rounded-xl shadow-md font-bold text-xs md:text-sm flex items-center gap-1.5">
-                    <i data-lucide="download" class="w-4 h-4"></i>
-                    <span>Baixar</span>
-                </button>
-            </div>
+        <div class="flex items-center gap-1.5">
+            <button id="finish-btn" class="btn-bounce bg-emerald-500 active:bg-emerald-600 text-white px-2.5 py-1.5 rounded-lg shadow font-bold text-xs flex items-center gap-1">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Pronto!</span>
+            </button>
+            <button id="download-btn" class="btn-bounce bg-amber-400 active:bg-amber-500 text-slate-900 px-2.5 py-1.5 rounded-lg shadow font-bold text-xs flex items-center gap-1">
+                <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                <span class="hidden sm:inline">Baixar</span>
+            </button>
         </div>
     </header>
 
-    <!-- Conteudo Principal -->
-    <main class="max-w-7xl w-full mx-auto p-2 sm:p-4 flex-1 flex flex-col lg:flex-row gap-4 items-stretch">
+    <!-- PAINEL FIXO SUPERIOR: FERRAMENTAS + PALETA DE CORES -->
+    <div class="bg-white border-b border-slate-200 shadow-sm shrink-0 flex flex-col gap-2 p-2 z-10">
         
-        <!-- Painel Esquerdo: Selecao das Imagens Inseridas -->
-        <section class="lg:w-64 bg-white p-3 md:p-4 rounded-2xl shadow-md flex flex-col gap-3 border-2 border-indigo-100">
-            <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-                <i data-lucide="images" class="w-4 h-4 text-indigo-500"></i> Escolha o Desenho
-            </h2>
-            <p class="text-[11px] text-slate-500">Clique em uma das imagens abaixo para carregar no quadro de pintura:</p>
+        <!-- LINHA 1: Ferramentas + Ações + Ajustes -->
+        <div class="flex items-center justify-between gap-1.5 overflow-x-auto custom-scrollbar pb-1">
             
-            <!-- Miniaturas dos Desenhos (Gerados via JS a partir do Array de Imagens) -->
-            <div id="image-selector" class="grid grid-cols-2 lg:grid-cols-1 gap-3 custom-scrollbar overflow-y-auto max-h-[180px] lg:max-h-[420px] p-1">
-                <!-- As miniaturas das imagens serao inseridas aqui automaticamente pelo JavaScript -->
-            </div>
-        </section>
-
-        <!-- Area Central: Canvas Interativo -->
-        <section class="flex-1 flex flex-col items-center justify-center relative">
-            <div id="drawing-container" class="w-full max-w-[600px] aspect-square relative border-4 border-white shadow-xl rounded-2xl bg-white flex items-center justify-center">
-                <canvas id="main-canvas" width="600" height="600"></canvas>
-            </div>
-        </section>
-
-        <!-- Painel Direito: Ferramentas e Ajustes -->
-        <section class="lg:w-72 bg-white p-3 md:p-4 rounded-2xl shadow-md flex flex-col gap-4 border-2 border-indigo-100">
-            
-            <!-- Selecao de Ferramentas -->
-            <div>
-                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Ferramentas</h2>
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="tool-fill" class="tool-btn active-tool bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 transition">
-                        <i data-lucide="paint-bucket" class="w-5 h-5"></i>
-                        <span class="text-xs font-bold">Balde</span>
-                    </button>
-                    <button id="tool-brush" class="tool-btn bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 transition">
-                        <i data-lucide="brush" class="w-5 h-5"></i>
-                        <span class="text-xs font-bold">Pincel</span>
-                    </button>
-                    <button id="tool-eraser" class="tool-btn bg-slate-50 border-2 border-slate-200 p-2.5 rounded-xl flex flex-col items-center gap-1 text-slate-700 transition">
-                        <i data-lucide="eraser" class="w-5 h-5"></i>
-                        <span class="text-xs font-bold">Borracha</span>
-                    </button>
-                </div>
+            <!-- Ferramentas Principais (Apenas Balde e Pincel) -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+                <button id="tool-fill" class="tool-btn active-tool bg-white p-2 rounded-lg flex items-center gap-1 text-slate-700 transition">
+                    <i data-lucide="paint-bucket" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold hidden sm:inline">Balde</span>
+                </button>
+                <button id="tool-brush" class="tool-btn p-2 rounded-lg flex items-center gap-1 text-slate-700 transition">
+                    <i data-lucide="brush" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold hidden sm:inline">Pincel</span>
+                </button>
             </div>
 
-            <!-- Controles Deslizantes -->
-            <div class="bg-slate-50 p-3 rounded-xl border border-slate-200 flex flex-col gap-3">
-                <!-- Tamanho do Traço do Pincel -->
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold text-slate-600">Espessura Pincel</span>
-                        <span id="brush-size-val" class="text-xs font-extrabold text-indigo-600">12px</span>
-                    </div>
-                    <input type="range" id="brush-size" min="2" max="40" value="12" class="w-full accent-indigo-600 cursor-pointer">
-                </div>
-
-                <!-- Sensibilidade / Tolerância do Balde -->
-                <div>
-                    <div class="flex justify-between items-center mb-1">
-                        <span class="text-xs font-bold text-slate-600" title="Ajusta o limite para fechar linhas">Tolerância Balde</span>
-                        <span id="tolerance-val" class="text-xs font-extrabold text-indigo-600">35</span>
-                    </div>
-                    <input type="range" id="tolerance-slider" min="5" max="120" value="35" class="w-full accent-indigo-600 cursor-pointer">
-                </div>
+            <!-- Desfazer / Refazer -->
+            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0">
+                <button id="btn-undo" class="btn-bounce p-2 hover:bg-white rounded-lg text-slate-700 transition" title="Desfazer">
+                    <i data-lucide="undo" class="w-4 h-4"></i>
+                </button>
+                <button id="btn-redo" class="btn-bounce p-2 hover:bg-white rounded-lg text-slate-700 transition" title="Refazer">
+                    <i data-lucide="redo" class="w-4 h-4"></i>
+                </button>
             </div>
 
-            <!-- Botões de Ação de Histórico -->
-            <div>
-                <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Ações</h2>
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="btn-undo" class="btn-bounce bg-slate-100 hover:bg-slate-200 p-2 rounded-xl flex flex-col items-center gap-1 text-slate-700 transition" title="Desfazer traço">
-                        <i data-lucide="undo" class="w-4 h-4"></i>
-                        <span class="text-[11px] font-semibold">Desfazer</span>
-                    </button>
-                    <button id="btn-redo" class="btn-bounce bg-slate-100 hover:bg-slate-200 p-2 rounded-xl flex flex-col items-center gap-1 text-slate-700 transition" title="Refazer traço">
-                        <i data-lucide="redo" class="w-4 h-4"></i>
-                        <span class="text-[11px] font-semibold">Refazer</span>
-                    </button>
-                    <button id="btn-clear" class="btn-bounce bg-red-50 hover:bg-red-100 text-red-600 p-2 rounded-xl flex flex-col items-center gap-1 border border-red-200 transition" title="Limpar todas as cores">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        <span class="text-[11px] font-semibold">Limpar</span>
-                    </button>
-                </div>
+            <!-- Slider de Espessura/Tolerância Dinâmico -->
+            <div class="flex items-center gap-2 bg-slate-100 px-2 py-1 rounded-xl shrink-0 min-w-[130px]">
+                <span id="slider-label" class="text-[10px] font-bold text-slate-500 uppercase">Tol:</span>
+                <input type="range" id="dynamic-slider" min="5" max="100" value="35" class="w-16 accent-indigo-600 cursor-pointer">
+                <span id="slider-val" class="text-xs font-extrabold text-indigo-600 min-w-[24px]">35</span>
             </div>
 
-            <!-- Indicador da Cor Atual + Seletor de Cores Customizado -->
-            <div class="flex items-center gap-3 bg-indigo-50 p-2.5 rounded-xl border border-indigo-100 mt-auto">
-                <div id="current-color-preview" class="w-8 h-8 rounded-full border-2 border-white shadow bg-pink-500 flex-shrink-0"></div>
-                <div class="flex-1">
-                    <p class="text-[10px] font-medium text-slate-500">Cor Atual</p>
-                    <p id="color-hex-text" class="text-xs font-bold text-indigo-900 uppercase">#EC4899</p>
-                </div>
-                <label for="custom-color-picker" class="cursor-pointer bg-white p-2 rounded-lg shadow-sm border border-slate-200 hover:bg-slate-50 text-xs font-semibold flex items-center gap-1">
+            <!-- Cor Atual / Custom Color -->
+            <div class="flex items-center gap-1.5 shrink-0 pl-1">
+                <div id="current-color-preview" class="w-7 h-7 rounded-full border-2 border-slate-200 shadow bg-pink-500"></div>
+                <label for="custom-color-picker" class="cursor-pointer bg-slate-100 p-1.5 rounded-lg border border-slate-200 text-slate-700 flex items-center justify-center">
                     <i data-lucide="pipette" class="w-4 h-4 text-indigo-600"></i>
-                    <span>Mais</span>
                     <input type="color" id="custom-color-picker" value="#ec4899" class="opacity-0 w-0 h-0 absolute">
                 </label>
+            </div>
+        </div>
+
+        <!-- LINHA 2: PALETA DE CORES -->
+        <div id="color-palette" class="flex items-center gap-1.5 overflow-x-auto custom-scrollbar py-0.5 px-1 w-full justify-start md:justify-center shrink-0">
+            <!-- Cores inseridas via JS -->
+        </div>
+    </div>
+
+    <!-- ÁREA CENTRAL DE PINTURA E SELEÇÃO DE DESENHOS -->
+    <main class="flex-1 w-full max-w-5xl mx-auto p-2 flex flex-col md:flex-row gap-2 items-center justify-center overflow-hidden min-h-0">
+        
+        <!-- Carrossel de Desenhos -->
+        <section class="w-full md:w-28 shrink-0 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
+            <div id="image-selector" class="flex md:flex-col gap-2 overflow-x-auto md:overflow-y-auto custom-scrollbar max-h-16 md:max-h-[70vh]">
+                <!-- Miniaturas geradas por JS -->
+            </div>
+        </section>
+
+        <!-- Canvas Interativo -->
+        <section class="flex-1 w-full h-full flex items-center justify-center min-h-0 relative">
+            <div id="drawing-container" class="relative aspect-square max-w-full max-h-full border-2 border-white shadow-lg rounded-xl bg-white overflow-hidden flex items-center justify-center">
+                <canvas id="main-canvas" width="600" height="600" class="w-full h-full touch-none"></canvas>
             </div>
         </section>
     </main>
 
-    <!-- Paleta de Cores Inferior -->
-    <footer class="bg-white border-t border-slate-200 p-2 md:p-3 shadow-inner">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
-            <span class="text-xs font-bold text-slate-400 hidden sm:inline uppercase tracking-wider">Cores:</span>
-            <div id="color-palette" class="flex items-center gap-2 overflow-x-auto custom-scrollbar py-1 px-2 w-full justify-start md:justify-center">
-                <!-- Cores inseridas dinamicamente via JS -->
-            </div>
-        </div>
-    </footer>
-
     <script>
-        /* ==========================================================================
-           1. CONFIGURAÇÃO DAS IMAGENS PRE-INSERIDAS
-           --------------------------------------------------------------------------
-           Para substituir pelas suas próprias imagens do repositório GitHub:
-           1. Crie uma pasta chamada 'imagens' no seu repositório (ex: imagens/desenho1.png).
-           2. Altere o atributo 'src' dos objetos abaixo com o caminho da imagem:
-              { id: 'img1', titulo: 'Meu Desenho 1', src: 'imagens/desenho1.png' },
-              { id: 'img2', titulo: 'Meu Desenho 2', src: 'imagens/desenho2.png' }
-           ========================================================================== */
-
+        /* CONFIGURAÇÃO DOS DESENHOS */
         const DESENHOS_CONFIGURADOS = [
-            {
-                id: 'desenho1',
-                titulo: 'Ursinho Amigo',
-                // Imagem SVG codificada em Data-URL (fundo branco com linhas pretas)
-                src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="600" height="600"><rect width="400" height="400" fill="white"/><circle cx="130" cy="130" r="35" stroke="black" stroke-width="10" fill="white"/><circle cx="270" cy="130" r="35" stroke="black" stroke-width="10" fill="white"/><circle cx="130" cy="130" r="18" fill="black"/><circle cx="270" cy="130" r="18" fill="black"/><circle cx="200" cy="220" r="110" stroke="black" stroke-width="10" fill="white"/><circle cx="160" cy="190" r="14" fill="black"/><circle cx="240" cy="190" r="14" fill="black"/><ellipse cx="200" cy="225" rx="30" ry="20" stroke="black" stroke-width="8" fill="white"/><ellipse cx="200" cy="218" rx="14" ry="10" fill="black"/><path d="M 185 235 Q 200 250 215 235" stroke="black" stroke-width="8" stroke-linecap="round" fill="none"/><circle cx="200" cy="320" r="60" stroke="black" stroke-width="10" fill="white"/></svg>'
-            },
-            {
-                id: 'desenho2',
-                titulo: 'Casinha no Campo',
-                // Segunda imagem SVG codificada em Data-URL
-                src: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="600" height="600"><rect width="400" height="400" fill="white"/><rect x="100" y="180" width="200" height="150" stroke="black" stroke-width="10" fill="white"/><polygon points="80,180 200,80 320,180" stroke="black" stroke-width="10" fill="white" stroke-linejoin="round"/><rect x="175" y="240" width="50" height="90" stroke="black" stroke-width="8" fill="white"/><circle cx="212" cy="285" r="5" fill="black"/><rect x="120" y="210" width="40" height="40" stroke="black" stroke-width="8" fill="white"/><line x1="140" y1="210" x2="140" y2="250" stroke="black" stroke-width="6"/><line x1="120" y1="230" x2="160" y2="230" stroke="black" stroke-width="6"/><circle cx="320" cy="70" r="30" stroke="black" stroke-width="8" fill="white"/><line x1="320" y1="25" x2="320" y2="10" stroke="black" stroke-width="6"/><line x1="320" y1="115" x2="320" y2="130" stroke="black" stroke-width="6"/><line x1="275" y1="70" x2="260" y2="70" stroke="black" stroke-width="6"/><line x1="365" y1="70" x2="380" y2="70" stroke="black" stroke-width="6"/></svg>'
-            }
+            { id: 'desenho1', titulo: 'Desenho 1', src: 'imagens/desenho1.png' },
+            { id: 'desenho2', titulo: 'Desenho 2', src: 'imagens/desenho2.png' }
         ];
 
-        // Paleta de Cores
+        /* PALETA DE CORES */
         const CORES_PALETA = [
             '#EF4444', '#F97316', '#F59E0B', '#10B981', '#06B6D4', 
             '#3B82F6', '#6366F1', '#8B5CF6', '#EC4899', '#F43F5E',
@@ -253,26 +176,26 @@
             '#38BDF8', '#4ADE80', '#FB7185', '#000000', '#FFFFFF'
         ];
 
-        // Estado da Aplicação
+        /* ESTADO DA APLICAÇÃO */
         let corAtual = '#EC4899';
-        let ferramentaAtual = 'fill'; // 'fill', 'brush', 'eraser'
+        let ferramentaAtual = 'fill'; // 'fill' ou 'brush'
         let espessuraPincel = 12;
-        let tolerânciaBalde = 35;
+        let toleranciaBalde = 35;
         let imagemAtualIndex = 0;
 
-        // Estado base da imagem carregada (para ação "Limpar")
         let estadoImagemOriginal = null;
+        let imagemLinhasCanvas = null;
 
-        // Pilha de Histórico Desfazer / Refazer
+        /* HISTÓRICO (UNDO / REDO) */
         let historicoPassos = [];
         let historicoIndice = -1;
-        const MAX_HISTORICO = 25;
+        const MAX_HISTORICO = 20;
 
-        // Contexto do Canvas
+        /* CANVAS */
         const canvas = document.getElementById('main-canvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
 
-        // Sintetizador Sonoro Simples
+        /* SINTETIZADOR SOM */
         let synth = null;
         function tocarSom(nota = 'C5') {
             try {
@@ -290,23 +213,23 @@
             } catch (e) {}
         }
 
-        // Renderiza as miniaturas das imagens configuradas
+        /* EVITA QUALQUER MOVIMENTO DE TELA INDESEJADO NO MOBILE */
+        document.body.addEventListener('touchmove', function(e) {
+            e.preventDefault();
+        }, { passive: false });
+
+        /* RENDERIZAR INTERFACE */
         function renderizarSelecaoImagens() {
             const container = document.getElementById('image-selector');
             container.innerHTML = '';
 
             DESENHOS_CONFIGURADOS.forEach((item, index) => {
                 const card = document.createElement('div');
-                card.className = `btn-bounce cursor-pointer p-2 rounded-xl border-2 transition flex flex-col items-center bg-white ${
-                    index === imagemAtualIndex ? 'border-indigo-600 ring-2 ring-indigo-200' : 'border-slate-200 hover:border-slate-300'
+                card.className = `btn-bounce cursor-pointer p-1 rounded-lg border-2 transition flex-shrink-0 w-12 h-12 md:w-20 md:h-20 bg-white flex items-center justify-center ${
+                    index === imagemAtualIndex ? 'border-indigo-600 ring-2 ring-indigo-200' : 'border-slate-200'
                 }`;
                 
-                card.innerHTML = `
-                    <div class="w-full aspect-square bg-slate-50 rounded-lg overflow-hidden flex items-center justify-center p-1 mb-1 border border-slate-100">
-                        <img src="${item.src}" alt="${item.titulo}" class="w-full h-full object-contain pointer-events-none">
-                    </div>
-                    <span class="text-[11px] font-bold text-slate-700 text-center truncate w-full">${item.titulo}</span>
-                `;
+                card.innerHTML = `<img src="${item.src}" alt="${item.titulo}" class="w-full h-full object-contain pointer-events-none">`;
 
                 card.addEventListener('click', () => {
                     if (imagemAtualIndex !== index) {
@@ -321,16 +244,14 @@
             });
         }
 
-        // Renderiza a Paleta de Cores
         function renderizarPaleta() {
             const container = document.getElementById('color-palette');
             container.innerHTML = '';
 
             CORES_PALETA.forEach(cor => {
                 const btn = document.createElement('button');
-                btn.className = `color-swatch w-7 h-7 md:w-8 md:h-8 rounded-full border-2 border-white shadow-sm flex-shrink-0 transition-transform ${cor === corAtual ? 'active' : ''}`;
+                btn.className = `color-swatch w-6 h-6 sm:w-7 sm:h-7 rounded-full border-2 border-white shadow-sm flex-shrink-0 transition-transform ${cor === corAtual ? 'active' : ''}`;
                 btn.style.backgroundColor = cor;
-                btn.title = cor;
                 btn.addEventListener('click', () => selecionarCor(cor, btn));
                 container.appendChild(btn);
             });
@@ -339,28 +260,22 @@
         function selecionarCor(cor, elemento = null) {
             corAtual = cor;
             document.getElementById('current-color-preview').style.backgroundColor = cor;
-            document.getElementById('color-hex-text').textContent = cor;
             document.getElementById('custom-color-picker').value = cor;
 
             document.querySelectorAll('.color-swatch').forEach(el => el.classList.remove('active'));
-            if (elemento) {
-                elemento.classList.add('active');
-            }
+            if (elemento) elemento.classList.add('active');
             tocarSom('C4');
         }
 
-        // Carrega qualquer Imagem (URL local ou Data-URL) no Canvas
+        /* CARREGAMENTO DE IMAGEM */
         function carregarImagem(caminhoSrc) {
             const img = new Image();
-            // Permite carregar imagens de domínios externos se suportado
             img.crossOrigin = 'Anonymous';
             
             img.onload = () => {
-                // Preenche fundo branco limpo
                 ctx.fillStyle = '#FFFFFF';
                 ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-                // Centraliza e ajusta a escala da imagem mantendo proporção
                 const escala = Math.min(canvas.width / img.width, canvas.height / img.height);
                 const largura = img.width * escala;
                 const altura = img.height * escala;
@@ -369,13 +284,9 @@
 
                 ctx.drawImage(img, x, y, largura, altura);
 
-                // Salva estado limpo e reinicia histórico
+                imagemLinhasCanvas = ctx.getImageData(0, 0, canvas.width, canvas.height);
                 salvarEstadoBase();
                 reiniciarHistorico();
-            };
-
-            img.onerror = () => {
-                console.error("Erro ao carregar a imagem do caminho:", caminhoSrc);
             };
 
             img.src = caminhoSrc;
@@ -385,7 +296,7 @@
             estadoImagemOriginal = ctx.getImageData(0, 0, canvas.width, canvas.height);
         }
 
-        // Gestão de Histórico (Desfazer / Refazer)
+        /* HISTÓRICO */
         function reiniciarHistorico() {
             historicoPassos = [];
             historicoIndice = -1;
@@ -420,7 +331,31 @@
             }
         }
 
-        // Algoritmo do Balde de Tinta (Flood Fill em Canvas)
+        /* RESTAURAÇÃO DE LINHAS */
+        function protegerLinhasDoDesenho() {
+            if (!imagemLinhasCanvas) return;
+
+            const atualData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const dataAtual = atualData.data;
+            const dataLinhas = imagemLinhasCanvas.data;
+
+            for (let i = 0; i < dataLinhas.length; i += 4) {
+                const r = dataLinhas[i];
+                const g = dataLinhas[i + 1];
+                const b = dataLinhas[i + 2];
+                
+                if (r < 100 && g < 100 && b < 100) {
+                    dataAtual[i] = r;
+                    dataAtual[i + 1] = g;
+                    dataAtual[i + 2] = b;
+                    dataAtual[i + 3] = 255;
+                }
+            }
+
+            ctx.putImageData(atualData, 0, 0);
+        }
+
+        /* PREENCHIMENTO BALDE */
         function hexParaRgba(hex) {
             let c = hex.replace('#', '');
             if (c.length === 3) c = c.split('').map(x => x + x).join('');
@@ -428,7 +363,7 @@
             return [(num >> 16) & 255, (num >> 8) & 255, num & 255, 255];
         }
 
-        function preenchimentoBalde(startX, startY, corPreenchimentoHex, tolerância) {
+        function preenchimentoBalde(startX, startY, corPreenchimentoHex, tolerancia) {
             const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
             const data = imgData.data;
             const largura = canvas.width;
@@ -442,23 +377,15 @@
 
             const [fillR, fillG, fillB, fillA] = hexParaRgba(corPreenchimentoHex);
 
-            // Não preenche se clicar em área já pintada com a mesma cor exata
             if (Math.abs(startR - fillR) < 4 && Math.abs(startG - fillG) < 4 &&
-                Math.abs(startB - fillB) < 4 && Math.abs(startA - fillA) < 4) {
-                return;
-            }
+                Math.abs(startB - fillB) < 4 && Math.abs(startA - fillA) < 4) return;
 
             function coincideCor(pos) {
-                const r = data[pos];
-                const g = data[pos + 1];
-                const b = data[pos + 2];
-                const a = data[pos + 3];
-
                 return (
-                    Math.abs(r - startR) <= tolerância &&
-                    Math.abs(g - startG) <= tolerância &&
-                    Math.abs(b - startB) <= tolerância &&
-                    Math.abs(a - startA) <= tolerância
+                    Math.abs(data[pos] - startR) <= tolerancia &&
+                    Math.abs(data[pos + 1] - startG) <= tolerancia &&
+                    Math.abs(data[pos + 2] - startB) <= tolerancia &&
+                    Math.abs(data[pos + 3] - startA) <= tolerancia
                 );
             }
 
@@ -466,7 +393,6 @@
             while (filaPixels.length > 0) {
                 const y = filaPixels.pop();
                 const x = filaPixels.pop();
-
                 let posAtual = (y * largura + x) * 4;
 
                 let x1 = x;
@@ -489,25 +415,15 @@
                     if (y > 0) {
                         const posCima = posAtual - largura * 4;
                         if (coincideCor(posCima)) {
-                            if (!alcancouEsquerda) {
-                                filaPixels.push(x1, y - 1);
-                                alcancouEsquerda = true;
-                            }
-                        } else if (alcancouEsquerda) {
-                            alcancouEsquerda = false;
-                        }
+                            if (!alcancouEsquerda) { filaPixels.push(x1, y - 1); alcancouEsquerda = true; }
+                        } else if (alcancouEsquerda) { alcancouEsquerda = false; }
                     }
 
                     if (y < altura - 1) {
                         const posBaixo = posAtual + largura * 4;
                         if (coincideCor(posBaixo)) {
-                            if (!alcancouDireita) {
-                                filaPixels.push(x1, y + 1);
-                                alcancouDireita = true;
-                            }
-                        } else if (alcancouDireita) {
-                            alcancouDireita = false;
-                        }
+                            if (!alcancouDireita) { filaPixels.push(x1, y + 1); alcancouDireita = true; }
+                        } else if (alcancouDireita) { alcancouDireita = false; }
                     }
 
                     x1++;
@@ -516,11 +432,12 @@
             }
 
             ctx.putImageData(imgData, 0, 0);
+            protegerLinhasDoDesenho();
             salvarPassoHistorico();
             tocarSom('E5');
         }
 
-        // Lógica de Pintura Livre e Interatividade
+        /* LOGICA DE PINTURA */
         let desenhando = false;
         let ultimoX = 0;
         let ultimoY = 0;
@@ -540,10 +457,11 @@
         }
 
         function iniciarPintura(e) {
+            e.preventDefault();
             const coords = obterCoordenadasCanvas(e);
 
             if (ferramentaAtual === 'fill') {
-                preenchimentoBalde(coords.x, coords.y, corAtual, tolerânciaBalde);
+                preenchimentoBalde(coords.x, coords.y, corAtual, toleranciaBalde);
                 return;
             }
 
@@ -563,14 +481,8 @@
             ctx.lineTo(coords.x, coords.y);
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
-
-            if (ferramentaAtual === 'eraser') {
-                ctx.strokeStyle = '#FFFFFF';
-                ctx.lineWidth = espessuraPincel * 1.5;
-            } else {
-                ctx.strokeStyle = corAtual;
-                ctx.lineWidth = espessuraPincel;
-            }
+            ctx.strokeStyle = corAtual;
+            ctx.lineWidth = espessuraPincel;
 
             ctx.stroke();
 
@@ -578,9 +490,10 @@
             ultimoY = coords.y;
         }
 
-        function finalizarPintura() {
+        function finalizarPintura(e) {
             if (desenhando) {
                 desenhando = false;
+                protegerLinhasDoDesenho();
                 salvarPassoHistorico();
             }
         }
@@ -589,19 +502,37 @@
             ferramentaAtual = ferramenta;
             document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active-tool'));
             document.getElementById(`tool-${ferramenta}`).classList.add('active-tool');
+
+            const slider = document.getElementById('dynamic-slider');
+            const label = document.getElementById('slider-label');
+            const valText = document.getElementById('slider-val');
+
+            if (ferramenta === 'fill') {
+                label.textContent = 'Tol:';
+                slider.min = 5;
+                slider.max = 100;
+                slider.value = toleranciaBalde;
+                valText.textContent = toleranciaBalde;
+            } else {
+                label.textContent = 'Tam:';
+                slider.min = 2;
+                slider.max = 40;
+                slider.value = espessuraPincel;
+                valText.textContent = espessuraPincel;
+            }
+
             tocarSom('A4');
         }
 
-        // Inicialização dos Eventos da Interface
+        /* INICIALIZAÇÃO */
         function inicializar() {
             lucide.createIcons();
             renderizarPaleta();
             renderizarSelecaoImagens();
 
-            // Carrega o primeiro desenho cadastrado
             carregarImagem(DESENHOS_CONFIGURADOS[0].src);
 
-            // Eventos do Canvas (Mouse e Touch)
+            // Eventos do Canvas
             canvas.addEventListener('mousedown', iniciarPintura);
             canvas.addEventListener('mousemove', moverPintura);
             canvas.addEventListener('mouseup', finalizarPintura);
@@ -611,50 +542,42 @@
             canvas.addEventListener('touchmove', moverPintura, { passive: false });
             canvas.addEventListener('touchend', finalizarPintura);
 
-            // Botoes das Ferramentas
+            // Ferramentas
             document.getElementById('tool-fill').addEventListener('click', () => definirFerramenta('fill'));
             document.getElementById('tool-brush').addEventListener('click', () => definirFerramenta('brush'));
-            document.getElementById('tool-eraser').addEventListener('click', () => definirFerramenta('eraser'));
 
-            // Sliders
-            document.getElementById('brush-size').addEventListener('input', (e) => {
-                espessuraPincel = parseInt(e.target.value);
-                document.getElementById('brush-size-val').textContent = `${espessuraPincel}px`;
+            // Slider
+            document.getElementById('dynamic-slider').addEventListener('input', (e) => {
+                const val = parseInt(e.target.value);
+                document.getElementById('slider-val').textContent = val;
+                if (ferramentaAtual === 'fill') {
+                    toleranciaBalde = val;
+                } else {
+                    espessuraPincel = val;
+                }
             });
 
-            document.getElementById('tolerance-slider').addEventListener('input', (e) => {
-                tolerânciaBalde = parseInt(e.target.value);
-                document.getElementById('tolerance-val').textContent = tolerânciaBalde;
-            });
-
-            // Color Picker Customizado
+            // Seletor de cor customizado
             document.getElementById('custom-color-picker').addEventListener('input', (e) => {
                 selecionarCor(e.target.value);
             });
 
-            // Botões Desfazer, Refazer e Limpar
+            // Ações
             document.getElementById('btn-undo').addEventListener('click', desfazer);
             document.getElementById('btn-redo').addEventListener('click', refazer);
-            document.getElementById('btn-clear').addEventListener('click', () => {
-                if (estadoImagemOriginal) {
-                    ctx.putImageData(estadoImagemOriginal, 0, 0);
-                    reiniciarHistorico();
-                    tocarSom('C4');
-                }
-            });
 
-            // Botões Superiores
+            // Botões do Cabeçalho
             document.getElementById('finish-btn').addEventListener('click', () => {
                 tocarSom('G5');
                 if (typeof confetti === 'function') {
-                    confetti({ particleCount: 120, spread: 80, origin: { y: 0.6 } });
+                    confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
                 }
             });
 
             document.getElementById('download-btn').addEventListener('click', () => {
                 tocarSom('C5');
                 const link = document.createElement('a');
-                link.download = `meu-desenho-colorido-${Date.now()}.png`;
+                link.download = `desenho-colorido-${Date.now()}.png`;
                 link.href = canvas.toDataURL('image/png');
                 link.click();
             });
